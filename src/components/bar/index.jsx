@@ -26,7 +26,7 @@ import Current from '../currents';
 const drawerWidth = 240;
 const useStyles = makeStyles((theme) => ({
     root: {
-        display: 'flex',
+        display: 'flex'
     },
     appBar: {
         // Make the app bar z-index always one more than the drawer z-index
@@ -108,7 +108,7 @@ const useStyles = makeStyles((theme) => ({
         justifyContent: 'center',
     },
     inputRoot: {
-        color: 'inherid',
+        color: 'inherit',
     },
     inputInput: {
         padding: theme.spacing(1, 1, 1, 0),
