@@ -18,3 +18,8 @@ code {
   padding: 0;
 }
 
+#root {
+  min-height: 100vh;
+  width: 100%;
+}
+

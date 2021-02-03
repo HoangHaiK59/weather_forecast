@@ -4,19 +4,25 @@ import MainAppBar from '../components/bar';
 
 const useStyles = makeStyles((theme) => ({
     bgImage: {
-        height: '100%',
-        width: '100%',
-        backgroundImage: "url('/background.jpg')",
+        backgroundImage: "url('/bluebg.jpg')",
         backgroundRepeat: 'no-repeat',
         backgroundPosition: 'center',
         backgroundAttachment: 'fixed',
         backgroundSize: 'cover',
+        minHeight: '100vh',
+        width: '100%',
+        padding: 0,
+        '&::before': {
+            content: '""',
+            minHeight: '100vh',
+            background: 'linear-gradient(to bottom right, rgba(197, 31, 31, 1), rgba(5,60,3,1))'
+        }
     }
 }))
 
 export const ContainerElement = (props) => {
     const classes = useStyles();
-    return <Container maxWidth="xl" style={{padding: '0px', minHeight: '100vh'}} className={classes.bgImage}>
+    return <Container maxWidth="xl" className={classes.bgImage}>
         <MainAppBar {...props}/>
     </Container>
 }

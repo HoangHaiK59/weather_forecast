@@ -1,5 +1,5 @@
 import React from 'react';
-import { AppBar, Toolbar, Typography, Menu, MenuItem, Badge, InputBase, Drawer, Divider, List, ListItem, ListItemIcon, ListItemText } from '@material-ui/core';
+import { AppBar, Toolbar, Typography, Menu, MenuItem, Badge, InputBase, Drawer, Divider, List, ListItem, ListItemIcon, ListItemText, Hidden } from '@material-ui/core';
 import MenuIcon from '@material-ui/icons/Menu';
 import IconButton from '@material-ui/core/IconButton';
 import { fade, makeStyles, useTheme } from '@material-ui/core/styles';
@@ -49,9 +49,11 @@ const useStyles = makeStyles((theme) => ({
         display: 'none',
     },
     drawer: {
-        width: drawerWidth,
-        flexShrink: 0,
         whiteSpace: 'nowrap',
+        [theme.breakpoints.up('sm')]: {
+            width: drawerWidth,
+            flexShrink: 0,
+        },
     },
     drawerOpen: {
         width: drawerWidth,
@@ -70,6 +72,9 @@ const useStyles = makeStyles((theme) => ({
         [theme.breakpoints.up('sm')]: {
             width: theme.spacing(9) + 1
         }
+    },
+    drawerPaper: {
+        width: drawerWidth,
     },
     grow: {
         flexGrow: 1
@@ -268,6 +273,27 @@ const MainAppBar = (props) => {
         props.history.push(textReplace)
     }
 
+    const renderDrawer = (
+        <div>
+            <div className={classes.toolbar}>
+                <IconButton onClick={toggleDrawer('left', false)}>
+                    {theme.direction === 'rtl' ? <ChevronRightIcon /> : <ChevronLeftIcon />}
+                </IconButton>
+            </div>
+            <Divider />
+            <List component="nav">
+                {['Dashboard', 'Current', '16 Day/Daily', 'History', '5 Day/3H', '30 Day'].map((text, index) => (
+                    <ListItem button key={text} onClick={() => handleClickPath(text, index)}>
+                        <ListItemIcon>{mapIcon2Index(index)}</ListItemIcon>
+                        <ListItemText primary={text} />
+                    </ListItem>
+                ))}
+            </List>
+        </div>
+    )
+
+    const container = window !== undefined ? () => window.document.body : undefined;
+
     return (
         <div className={classes.root}>
             <CssBaseline />
@@ -333,36 +359,45 @@ const MainAppBar = (props) => {
                 </Toolbar>
             </AppBar>
             <React.Fragment key={'left'}>
-                <Drawer
-                    onMouseMove={toggleDrawer('left', true)}
-                    onMouseLeave={toggleDrawer('left', false)}
-                    variant="permanent"
-                    className={clxs(classes.drawer, {
-                        [classes.drawerOpen]: state.left,
-                        [classes.drawerClose]: !state.left,
-                    })}
-                    classes={{
-                        paper: clxs({
+                <Hidden smUp >
+                    <Drawer
+                        container={container}
+                        variant="temporary"
+                        classes={{
+                            paper: classes.drawerPaper
+                        }}
+                        open={state.left}
+                        anchor={theme.direction === 'rtl' ? 'right' : 'left'}
+                        onClose={toggleDrawer('left', false)}
+                        ModalProps={{
+                            keepMounted: true, // Better open performance on mobile.
+                        }}
+                    >
+                        {renderDrawer}
+                    </Drawer>
+                </Hidden>
+                <Hidden xsDown >
+                    <Drawer
+                        onMouseMove={toggleDrawer('left', true)}
+                        onMouseLeave={toggleDrawer('left', false)}
+                        variant="permanent"
+                        className={clxs(classes.drawer, {
                             [classes.drawerOpen]: state.left,
-                            [classes.drawerClose]: !state.left
-                        })
-                    }}
-                >
-                <div className={classes.toolbar}>
-                    <IconButton onClick={toggleDrawer('left', false)}>
-                        {theme.direction === 'rtl' ? <ChevronRightIcon /> : <ChevronLeftIcon />}
-                    </IconButton>
-                </div>
-                    <Divider />
-                    <List component="nav">
-                        {['Dashboard', 'Current', '16 Day/Daily', 'History', '5 Day/3H', '30 Day'].map((text, index) => (
-                            <ListItem button key={text} onClick={() => handleClickPath(text, index)}>
-                                <ListItemIcon>{mapIcon2Index(index)}</ListItemIcon>
-                                <ListItemText primary={text} />
-                            </ListItem>
-                        ))}
-                    </List>
-                </Drawer>
+                            [classes.drawerClose]: !state.left,
+                        })}
+                        classes={{
+                            paper: clxs({
+                                [classes.drawerOpen]: state.left,
+                                [classes.drawerClose]: !state.left
+                            })
+                        }}
+                        ModalProps={{
+                            keepMounted: true, // Better open performance on mobile.
+                        }}
+                    >
+                        {renderDrawer}
+                    </Drawer>
+                </Hidden>
             </React.Fragment>
             <main className={classes.content}>
                 <div className={classes.toolbar} />

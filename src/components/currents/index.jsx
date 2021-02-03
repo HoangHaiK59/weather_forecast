@@ -6,6 +6,7 @@ import { Grid, makeStyles, fade, Paper } from '@material-ui/core';
 import { Search, LocationOn, Cloud } from '@material-ui/icons';
 import { Autocomplete } from '@material-ui/lab';
 import { cities } from '../citites';
+import * as moment from 'moment';
 
 const useStyles = makeStyles((theme) => ({
     option: {
@@ -55,10 +56,17 @@ const useStyles = makeStyles((theme) => ({
         justifyContent: 'center',
     },
     city: {
-        fontSize: '2.5rem'
+        fontSize: '2.5rem',
+        textShadow: '1px 1px black',
+        [theme.breakpoints.down('sm')]: {
+            fontSize: '1.2rem',
+        }
     },
     cloud: {
-        fontSize: 140
+        fontSize: 140,
+        [theme.breakpoints.between('xs', 'sm')]: {
+            fontSize: '6.5rem'
+        }
     },
     paper: {
         width: 200,
@@ -67,6 +75,9 @@ const useStyles = makeStyles((theme) => ({
     autoComplete: {
         width: 600,
         marginTop: theme.spacing(10),
+        [theme.breakpoints.between('xs', 'sm')]: {
+            width: 320
+        }
     },
     textField: {
         border: 0,
@@ -79,7 +90,13 @@ const useStyles = makeStyles((theme) => ({
         height: 80,
     },
     tempure: {
-        height: 200
+        height: 200,
+    },
+    parameter: {
+        height: 200,
+        backgroundColor: 'rgba(85, 154, 194, .5)',
+        borderRadius: '5px'
+
     },
     cloudInfo: {
         display: 'flex',
@@ -90,7 +107,11 @@ const useStyles = makeStyles((theme) => ({
         flexDirection: 'column',
     },
     celcius: {
-        fontSize: '110px'
+        fontSize: '110px',
+        textShadow: '1px 1px black',
+        [theme.breakpoints.between('xs', 'sm')]: {
+            fontSize: '1.5rem'
+        }
     },
     cloudName: {
         fontSize: '1.2rem',
@@ -99,15 +120,40 @@ const useStyles = makeStyles((theme) => ({
     extract: {
         display: 'flex',
         flexWrap: 'wrap',
+        justifyContent: 'flex-start',
+        padding: '10px',
+        width: '100%'
+    },
+    extractItem: {
+        display: 'flex',
         justifyContent: 'space-between',
-        padding: '10px'
+        flexDirection: 'column',
+        width: '33%',
+        marginTop: '10px',
+        '& > p': {
+            fontSize: '1.7rem',
+            [theme.breakpoints.down('sm')]: {
+                fontSize: '1.1rem',
+            }
+        }
+    },
+    datetime: {
+        fontSize: '1.8rem',
+        textShadow: '1px 1px black',
+        [theme.breakpoints.down('sm')]: {
+            fontSize: '0.9rem',
+        }
     }
 }))
 
 const Current = props => {
     const classes = useStyles();
-    const [current, setCurrent] = React.useState(JSON.parse(localStorage.getItem('temp')) || null);
+    const [current, setCurrent] = React.useState(null);
+    React.useEffect(() => {
+        getWeather();
+    }, [])
     const getWeather = async e => {
+        console.log('api cal')
         try {
             const promise = await fetch(`http://api.openweathermap.org/data/2.5/weather?q=Ha noi,vn&appid=${OWM_APIKEY}`);
             const response = await promise.json();
@@ -119,12 +165,68 @@ const Current = props => {
             console.log(error)
         }
     } 
-    React.useEffect(() => {
-        // getWeather();
-    }, [])
+    const renderCityCountry = (key, data) => {
+        return <React.Fragment>
+            <h2 className={classes.city}>{data[key] + ',' + data['sys'].country}</h2>
+        </React.Fragment>
+    }
+    const renderTempureorMain = (key, data) => {
+        if (key === 'weather') {
+            return <React.Fragment key={key}>
+                {
+                    
+                    data[key].map(d =><h3 key={d.id.toString()} className={classes.cloudName}>{d?.description}</h3>)
+                }
+            </React.Fragment>
+        } else if(key === 'main') {
+            return <React.Fragment key={key}>
+               <h3 className={classes.celcius}>{Math.floor(data[key]?.temp - 273.15)} &#8451;</h3>
+            </React.Fragment>
+        }
+    }
+    const renderParameter = (key, data) => {
+        if (key === 'sys') {
+            return <React.Fragment key={key}>
+                <div className={classes.extractItem}>
+                    <p>Sunrise</p>
+                    <p>{moment(data[key]?.sunrise).format('hh:mm')}</p>
+                </div>
+                <div className={classes.extractItem}>
+                    <p>Sunset</p>
+                    <p>{moment(data[key]?.sunset).format('hh:mm')}</p>
+                </div>
+            </React.Fragment>
+        } else if (key === 'main') {
+            return <React.Fragment key={key}>
+                <div className={classes.extractItem}>
+                    <p>Feels like</p>
+                    <p>{Math.floor(data[key]?.feels_like - 273.15)} &#8451;</p>
+                </div>
+                <div className={classes.extractItem}>
+                    <p>High</p>
+                    <p>{Math.floor(data[key]?.temp_max - 273.15)} &#8451;</p>
+                </div>
+                <div className={classes.extractItem}>
+                    <p>Low</p>
+                    <p>{Math.floor(data[key]?.temp_min - 273.15)} &#8451;</p>
+                </div>
+            </React.Fragment>
+        } else if (key === 'wind') {
+            return <React.Fragment key={key}>
+                <div className={classes.extractItem}>
+                    <p>Wind</p>
+                    <p>{data[key]?.speed}mph</p>
+                </div>
+            </React.Fragment>
+        }
+        return null
+    }
+    const renderDate = (key = 'dt', data) => {
+        return <h3 className={classes.datetime}>{moment(data[key]).format('DD MMM YYYY')}</h3>
+    }
 console.log(current)
     return (
-        <Container maxWidth="lg">
+        current && <Container maxWidth="lg">
             <Grid container className={classes.root} spacing={2}>
                 <Grid item xs={12} md={12}>
                     <Grid container justify="center">
@@ -161,27 +263,30 @@ console.log(current)
                     </Grid>
                 </Grid>
                 <Grid className={classes.locationName} item xs={12} md={12}>
-                    <Grid container justify="flex-start">
-                        <h2 className={classes.city}>Ha noi, VN</h2>
+                    <Grid container justify="flex-start" direction="column">
+                        {renderCityCountry('name', current)}
+                        {renderDate('dt', current)}
                     </Grid>
                 </Grid>
                 <Grid className={classes.tempure} item xs={12} md={6}>
                     <Grid container justify="center" alignItems="center">
-                        <Grid item xs={3} md={3}>
+                        <Grid item xs={4} md={3}>
                             <Cloud className={classes.cloud} />
                         </Grid>
-                        <Grid item xs={9} md={9}>
+                        <Grid item xs={8} md={9}>
                             <div className={classes.cloudInfo}>
-                                <h3 className={classes.celcius}>12 &#8451;</h3>
-                                <h3 className={classes.cloudName}>Broken cloud</h3>
+                                {renderTempureorMain('main', current)}
+                                {renderTempureorMain('weather', current)}
                             </div>
                         </Grid>
                     </Grid>
                 </Grid>
-                <Grid className={classes.tempure} item xs={12} md={6}>
+                <Grid className={classes.parameter} item xs={12} md={6}>
                     <Grid container justify="flex-start">
                         <div className={classes.extract}>
-
+                            {
+                                Object.keys(current).map(key => renderParameter(key, current))
+                            }
                         </div>
                     </Grid>
                 </Grid>
