@@ -128,8 +128,9 @@ const useStyles = makeStyles((theme) => ({
         display: 'flex',
         justifyContent: 'space-between',
         flexDirection: 'column',
-        width: '33%',
+        width: '25%',
         marginTop: '10px',
+        padding: '1px',
         '& > p': {
             fontSize: '1.7rem',
             [theme.breakpoints.down('sm')]: {
@@ -149,18 +150,30 @@ const useStyles = makeStyles((theme) => ({
 const Current = props => {
     const classes = useStyles();
     const [current, setCurrent] = React.useState(null);
+    const [cityId, setCityId] = React.useState(document.cookie.split(';').find(v => v.indexOf('cityId') > -1) ? document.cookie.split(';').find(v => v.indexOf('cityId') > -1).split('=')[1]: 1581129)
     React.useEffect(() => {
-        getWeather();
-    }, [])
-    const getWeather = async e => {
-        console.log('api cal')
+        getWeather(cityId);
+    }, [cityId])
+    const createCookie = (cookieName, cookieValue, hourExpire) => {
+        let date = new Date();
+        date.setTime(date.getTime() + hourExpire*60*60*1000);
+        document.cookie = cookieName + " = " + cookieValue + '; expires = ' + date.toGMTString();
+    }
+    const changeCity = (event, value) => {
+        setCityId(value.id);
+        createCookie('cityId', value.id, 5)
+        console.log(document.cookie.split(';'))
+    }
+    const renderIcon = (key = 'weather', data) => {
+        const url = `http://openweathermap.org/img/wn/${data[key][0].icon}@2x.png`;
+        return <img src={url} alt="icon" />
+    }
+    const getWeather = async cityId => {
         try {
-            const promise = await fetch(`http://api.openweathermap.org/data/2.5/weather?q=Ha noi,vn&appid=${OWM_APIKEY}`);
+            const promise = await fetch(`http://api.openweathermap.org/data/2.5/weather?id=${cityId}&appid=${OWM_APIKEY}&lang=vi`);
             const response = await promise.json();
-            console.log(response);
     
             setCurrent(response);
-            localStorage.setItem('temp', JSON.stringify(response))
         } catch(error) {
             console.log(error)
         }
@@ -210,6 +223,10 @@ const Current = props => {
                     <p>Low</p>
                     <p>{Math.floor(data[key]?.temp_min - 273.15)} &#8451;</p>
                 </div>
+                <div className={classes.extractItem}>
+                    <p>Humidity</p>
+                    <p>{data[key]?.humidity}%</p>
+                </div>
             </React.Fragment>
         } else if (key === 'wind') {
             return <React.Fragment key={key}>
@@ -222,9 +239,8 @@ const Current = props => {
         return null
     }
     const renderDate = (key = 'dt', data) => {
-        return <h3 className={classes.datetime}>{moment(data[key]).format('DD MMM YYYY')}</h3>
+        return <h3 className={classes.datetime}>{moment(new Date()).format('DD MMM YYYY')}</h3>
     }
-console.log(current)
     return (
         current && <Container maxWidth="lg">
             <Grid container className={classes.root} spacing={2}>
@@ -235,6 +251,7 @@ console.log(current)
                         disableClearable
                         autoHighlight
                         options={cities}
+                        onChange={changeCity}
                         className={classes.autoComplete}
                         classes ={{option: classes.option}}
                         fullWidth
@@ -271,7 +288,8 @@ console.log(current)
                 <Grid className={classes.tempure} item xs={12} md={6}>
                     <Grid container justify="center" alignItems="center">
                         <Grid item xs={4} md={3}>
-                            <Cloud className={classes.cloud} />
+                            {/* <Cloud className={classes.cloud} /> */}
+                            {renderIcon('weather',current)}
                         </Grid>
                         <Grid item xs={8} md={9}>
                             <div className={classes.cloudInfo}>

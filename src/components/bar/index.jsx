@@ -22,6 +22,7 @@ import AutoRenewIcon from '@material-ui/icons/Autorenew';
 import DateRangeIcon from '@material-ui/icons/DateRange';
 import { Switch, Route, withRouter } from 'react-router-dom';
 import Current from '../currents';
+import SpecificLocation from '../location'
 
 const drawerWidth = 240;
 const useStyles = makeStyles((theme) => ({
@@ -282,7 +283,7 @@ const MainAppBar = (props) => {
             </div>
             <Divider />
             <List component="nav">
-                {['Dashboard', 'Current', '16 Day/Daily', 'History', '5 Day/3H', '30 Day'].map((text, index) => (
+                {['Dashboard', 'Current', '1 Hour', 'History', '2 Day', '7 Day'].map((text, index) => (
                     <ListItem button key={text} onClick={() => handleClickPath(text, index)}>
                         <ListItemIcon>{mapIcon2Index(index)}</ListItemIcon>
                         <ListItemText primary={text} />
@@ -403,6 +404,7 @@ const MainAppBar = (props) => {
                 <div className={classes.toolbar} />
                 <Switch>
                     <Route extract path="/current" render={props => <Current {...props} />}/>
+                    <Route extract path="/1hour" render={props => <SpecificLocation {...props} />}/>
                 </Switch>
             </main>
             {renderMobileMenu}
