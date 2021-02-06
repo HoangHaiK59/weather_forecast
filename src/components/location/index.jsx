@@ -1,8 +1,9 @@
 import React from 'react';
-import { Container, Grid, Card, CardContent, makeStyles, Typography } from '@material-ui/core';
+import { Container, Grid, Card, CardContent, makeStyles, Typography, MobileStepper, useMediaQuery, useTheme, Button } from '@material-ui/core';
 import { withRouter } from 'react-router-dom';
 import { cities } from '../citites';
 import { OWM_APIKEY } from '../constants/apikey';
+import { KeyboardArrowLeft, KeyboardArrowRight } from '@material-ui/icons';
 import * as moment from 'moment';
 
 const useStyles = makeStyles((theme) => ({
@@ -72,10 +73,43 @@ const useStyles = makeStyles((theme) => ({
             }
         }
     },
+    hourlyCard: {
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        [theme.breakpoints.between('xs', 'sm')]: {
+            height: 120,
+            '& > img': {
+                height: 60,
+                width: 60
+            }
+        },
+    },
+    hourlyCardTemperature: {
+        display: 'flex',
+        justifyContent: 'space-around',
+        width: '100%'
+    },
+    celciusStepper: {
+        fontSize: '1.5rem',
+        textShadow: '1px 1px black',
+        [theme.breakpoints.between('xs', 'sm')]: {
+            fontSize: '1rem'
+        }
+    },
+    cloudStep: {
+        fontSize: '.5rem',
+        padding: '0 10px'
+    },
+
 }))
 
 const SpecificLocation = (props) => {
     const classes = useStyles();
+    const theme = useTheme();
+    const match = useMediaQuery(theme.breakpoints.down('sm'));
+    const [activeStep, setActiveStep] = React.useState(0);
     const [cityId, setCityId] = React.useState(document.cookie.split(';').find(v => v.indexOf('cityId') > -1) ? document.cookie.split(';').find(v => v.indexOf('cityId') > -1).split('=')[1]: 1581129)
     const [spcLocation, setSpcLocation] = React.useState(localStorage.getItem('temp') ? JSON.parse(localStorage.getItem('temp')): null);
     // React.useEffect(() => {
@@ -97,10 +131,81 @@ const SpecificLocation = (props) => {
             console.log(error)
         }
     }
+    const next = () => {
+        setActiveStep((prevStep) => prevStep + 1)
+    }
+    const prev = () => {
+        setActiveStep((prevStep) => prevStep - 1)
+    }
     const renderIcon = (keyParent, key = 'weather', data) => {
-        console.log(data[keyParent][key])
         const url = `http://openweathermap.org/img/wn/${data[keyParent][key][0].icon}@2x.png`;
         return <img src={url} alt="icon" />
+    }
+    const renderIconWithSize = (size = 2, key = 'weather', data) => {
+        const url = `http://openweathermap.org/img/wn/${data[key][0].icon}@${size}x.png`;
+        return <img src={url} alt="icon" />
+    }
+    const renderHourTemperature = data => {
+        return <h4 className={classes.celciusStepper}>{Math.floor(data['temp'] - 273.15) } &#8451;</h4>
+    }
+    const renderUVandHum = (data) => {
+        return <div className={classes.hourlyCardTemperature}>
+            <p>{data['uvi']}</p>
+            <p>{data['humidity']}%</p>
+        </div>
+    }
+    const renderStepper = (activeIndex = 0, arrayStepper = [[]]) => {
+        const groupActive = arrayStepper[activeIndex];
+        const numberCard = Math.floor(12 / groupActive.length);
+        if (groupActive.length > 0) {
+            return <Grid container justify="space-around" alignItems="flex-start">
+                {
+                    groupActive.map((gr, id) => <Grid key={id} item xs={6} sm={6} md={numberCard} lg={numberCard}>
+                        <div className={classes.hourlyCard}>
+                            {renderIconWithSize(2, 'weather', gr)}
+                            {renderHourTemperature(gr)}
+                            {renderUVandHum(gr)}
+                        </div>
+                    </Grid>)
+                }
+            </Grid>
+        }
+    }
+    const groupByNumItem = (data = [], match) => {
+        let result = [];
+        if (match) {
+            for (let i =0; i< data.length; i+=4) {
+                result.push(data.slice(i, i+4))
+            }
+        } else {
+            for (let i =0; i< data.length; i+=8) {
+                result.push(data.slice(i, i+8))
+            }
+        }
+        return result;
+    }
+    const renderDot = (data = [[]] ) => {
+        return (
+            <MobileStepper
+            style={{width: '100%', background: 'transparent'}}
+            steps={data.length}
+            position="static"
+            variant="dots"
+            activeStep={activeStep}
+            nextButton={
+              <Button size="small" style={{color: '#fff'}} onClick={next} disabled={activeStep === data.length - 1}>
+                Next
+                {theme.direction === 'rtl' ? <KeyboardArrowLeft /> : <KeyboardArrowRight />}
+              </Button>
+            }
+            backButton={
+              <Button style={{color: '#fff'}} size="small" onClick={prev} disabled={activeStep === 0}>
+                {theme.direction === 'rtl' ? <KeyboardArrowRight /> : <KeyboardArrowLeft />}
+                Back
+              </Button>
+            }
+          />
+        )
     }
     const renderByKey = (key, data) => {
         if (key === 'current') {
@@ -111,11 +216,11 @@ const SpecificLocation = (props) => {
                             {key}
                         </Typography>
                         <Grid container justify="center" alignItems="center">
-                            <Grid item xs={4} md={3}>
+                            <Grid item xs={4} md={1}>
                                 {/* <Cloud className={classes.cloud} /> */}
                                 {renderIcon(key, 'weather',data)}
                             </Grid>
-                        <Grid item xs={8} md={9}>
+                        <Grid item xs={8} md={11}>
                                 <div className={classes.cloudInfo}>
                                     {renderTemperatureorMain(key, 'temp', data)}
                                     {renderTemperatureorMain(key, 'weather', data)}
@@ -134,39 +239,21 @@ const SpecificLocation = (props) => {
                     </CardContent>
                 </Card>
             )
+        } else if (key === 'hourly') {
+            return (
+                <React.Fragment key={key}>
+                    <Typography variant="h5">
+                        48 hours
+                    </Typography>
+                    {
+                      renderStepper(activeStep, groupByNumItem(data[key], match))
+                    }
+                    {
+                        renderDot(groupByNumItem(data[key], match))
+                    }
+                </React.Fragment>
+            )
         }
-        // } else if (key === 'hourly') {
-        //     return (
-        //         <Card className={classes.cardContent}>
-        //             <CardContent>
-        //                 <Typography variant="h4" className={classes.title} color="textSecondary" gutterBottom>
-        //                     {key}
-        //                 </Typography>
-        //                 <Grid container justify="center" alignItems="center">
-        //                     <Grid item xs={4} md={3}>
-        //                         {/* <Cloud className={classes.cloud} /> */}
-        //                         {renderIcon(key, 'weather',data)}
-        //                     </Grid>
-        //                 <Grid item xs={8} md={9}>
-        //                         <div className={classes.cloudInfo}>
-        //                             {renderTemperatureorMain(key, 'temp', data)}
-        //                             {renderTemperatureorMain(key, 'weather', data)}
-        //                         </div>
-        //                     </Grid>
-        //                 </Grid>
-        //                 <Grid className={classes.parameter} item xs={12} md={6}>
-        //                     <Grid container justify="flex-start">
-        //                         <div className={classes.extract}>
-        //                             {
-        //                                 Object.keys(data).map(keyC => renderParameter(keyC, data))
-        //                             }
-        //                         </div>
-        //                     </Grid>
-        //                 </Grid>
-        //             </CardContent>
-        //         </Card>
-        //     )
-        // }
         return null
     }
     const renderTemperatureorMain = (keyParent, keyChildren, data) => {
@@ -245,7 +332,7 @@ const SpecificLocation = (props) => {
     return (
         spcLocation && <Container maxWidth="lg">
             <Grid container className={classes.root} spacing={2}>
-                <Grid className={classes.locationCard} item xs={12} sm={12} md={6}>
+                <Grid className={classes.locationCard} item xs={12} sm={12} md={12}>
                     {
                         Object.keys(spcLocation).map(key => renderByKey(key, spcLocation))
                     }

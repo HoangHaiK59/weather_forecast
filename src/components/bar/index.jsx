@@ -23,6 +23,7 @@ import DateRangeIcon from '@material-ui/icons/DateRange';
 import { Switch, Route, withRouter } from 'react-router-dom';
 import Current from '../currents';
 import SpecificLocation from '../location'
+import SevenDay from '../seven-day';
 
 const drawerWidth = 240;
 const useStyles = makeStyles((theme) => ({
@@ -253,11 +254,12 @@ const MainAppBar = (props) => {
             case 2:
                 return <AutoRenewIcon />;
             case 3:
-                return <HistoryIcon />;
-            case 4:
-                return <CalendarIcon />;
-            case 5:
                 return <DateRangeIcon />;
+            case 4:
+                return <HistoryIcon />;
+            case 5:
+                return <CalendarIcon />;
+
         default:
             return null;
         }
@@ -283,7 +285,7 @@ const MainAppBar = (props) => {
             </div>
             <Divider />
             <List component="nav">
-                {['Dashboard', 'Current', '1 Hour', 'History', '2 Day', '7 Day'].map((text, index) => (
+                {['Dashboard', 'Current', '48 Hour', '7 Day', 'History'].map((text, index) => (
                     <ListItem button key={text} onClick={() => handleClickPath(text, index)}>
                         <ListItemIcon>{mapIcon2Index(index)}</ListItemIcon>
                         <ListItemText primary={text} />
@@ -404,7 +406,8 @@ const MainAppBar = (props) => {
                 <div className={classes.toolbar} />
                 <Switch>
                     <Route extract path="/current" render={props => <Current {...props} />}/>
-                    <Route extract path="/1hour" render={props => <SpecificLocation {...props} />}/>
+                    <Route extract path="/48hour" render={props => <SpecificLocation {...props} />}/>
+                    <Route extract path="/7day" render={props => <SevenDay {...props} />}/>
                 </Switch>
             </main>
             {renderMobileMenu}
